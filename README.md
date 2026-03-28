@@ -15,6 +15,7 @@ It runs in two places:
 - [What Is EIRIAD](#what-is-eiriad)
 - [Language Features](#language-features)
 - [Quick Start](#quick-start)
+- [Linux Installation](#linux-installation)
 - [CLI Usage](#cli-usage)
 - [Browser and WASM Usage](#browser-and-wasm-usage)
 - [Tutorial: Write and Run an EIRIAD WASM App](#tutorial-write-and-run-an-eiriad-wasm-app)
@@ -71,6 +72,33 @@ cargo install --path . --force
 eiriad
 eiriad examples/demo.ei
 ```
+
+## Linux Installation
+
+### One-line installer (from GitHub)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gwhitdev/Eiriad-Programming-Language/main/scripts/install_linux.sh | bash
+```
+
+### One-line installer (explicit method)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gwhitdev/Eiriad-Programming-Language/main/scripts/install_linux.sh | bash -s -- --method git
+```
+
+### Install from local source checkout
+
+```bash
+./scripts/install_linux.sh --method source
+```
+
+What the installer does:
+
+1. Ensures Linux is the current OS
+2. Installs Rust/cargo via rustup if missing
+3. Installs the `eiriad` CLI with `cargo install`
+4. Prints PATH guidance if `~/.cargo/bin` is not active yet
 
 ## CLI Usage
 
