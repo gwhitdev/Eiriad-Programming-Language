@@ -1,0 +1,19 @@
+mut todo_text = ""
+
+fn todo_status_ready() = "Runtime ready (.ei app loaded)"
+fn todo_status_need_input() = "Enter a task before adding."
+fn todo_status_added(item) = "Added: " + item
+fn todo_status_cleared() = "All tasks cleared."
+fn todo_empty_placeholder() = "No tasks yet."
+
+fn todo_add(item) = {
+    todo_text = todo_text + "- " + item + "\n"
+    todo_text
+}
+
+fn todo_clear() = {
+    todo_text = ""
+    todo_text
+}
+
+fn todo_list() = todo_text

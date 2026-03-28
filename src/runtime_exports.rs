@@ -8,8 +8,6 @@ fn escape_for_eiriad_string(value: &str) -> String {
         .replace('"', "\\\"")
         .replace('\r', "")
         .replace('\n', " ")
-        .trim()
-        .to_string()
 }
 
 #[wasm_bindgen]
@@ -52,31 +50,20 @@ impl EiriadRuntime {
         Ok(result.last_value.to_string())
     }
 
-    // Initializes TODO state in the runtime.
-    pub fn todo_init(&mut self) -> Result<(), JsError> {
-        self.eval_in_runtime("mut todo_text = \"\"")?;
-        Ok(())
-    }
-
-    // Adds one TODO item and returns the current list text.
-    pub fn todo_add(&mut self, item: &str) -> Result<String, JsError> {
-        let clean = escape_for_eiriad_string(item);
-        if clean.is_empty() {
-            return self.todo_list();
-        }
-
-        let source = format!("todo_text = todo_text + \"- {}\\n\"\ntodo_text", clean);
+    // Calls a zero-arg Eiriad function and returns its final value.
+    pub fn call0(&mut self, fn_name: &str) -> Result<String, JsError> {
+        let source = format!("{}()", fn_name.trim());
         self.eval_value(&source)
     }
 
-    // Clears TODO list and returns the current list text.
-    pub fn todo_clear(&mut self) -> Result<String, JsError> {
-        self.eval_value("todo_text = \"\"\ntodo_text")
-    }
-
-    // Reads TODO list text from runtime state.
-    pub fn todo_list(&mut self) -> Result<String, JsError> {
-        self.eval_value("todo_text")
+    // Calls a one-arg Eiriad function with a safely escaped string argument.
+    pub fn call1(&mut self, fn_name: &str, arg: &str) -> Result<String, JsError> {
+        let source = format!(
+            "{}(\"{}\")",
+            fn_name.trim(),
+            escape_for_eiriad_string(arg)
+        );
+        self.eval_value(&source)
     }
 
     pub fn env_snapshot(&self) -> String {

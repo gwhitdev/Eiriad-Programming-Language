@@ -4,7 +4,7 @@ use std::rc::Rc;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{window, Document, HtmlElement, HtmlInputElement, KeyboardEvent};
+use web_sys::{window, Document, HtmlElement, HtmlInputElement, KeyboardEvent, XmlHttpRequest};
 
 use super::runtime_exports::EiriadRuntime;
 
@@ -14,43 +14,23 @@ struct TodoUiState {
     list_el: HtmlElement,
     trace_el: HtmlElement,
     input_el: HtmlInputElement,
+    empty_placeholder: String,
+    status_need_input: String,
+    status_cleared: String,
 }
 
 impl TodoUiState {
-    fn paint_todos(&self, raw_text: &str) {
-        self.list_el.set_inner_html("");
-
-        let rows: Vec<&str> = raw_text
-            .split('\n')
-            .map(str::trim)
-            .filter(|row| !row.is_empty())
-            .collect();
-
-        let document = self
-            .list_el
-            .owner_document()
-            .expect("list element should have a document");
-
-        if rows.is_empty() {
-            if let Ok(li) = document.create_element("li") {
-                li.set_text_content(Some("No tasks yet."));
-                let _ = li.set_attribute("style", "color: #6e6458");
-                let _ = self.list_el.append_child(&li);
-            }
-            return;
-        }
-
-        for row in rows {
-            if let Ok(li) = document.create_element("li") {
-                li.set_text_content(Some(row));
-                let _ = self.list_el.append_child(&li);
-            }
+    fn render_list_text(&self, list_text: &str) {
+        if list_text.trim().is_empty() {
+            self.list_el.set_text_content(Some(&self.empty_placeholder));
+        } else {
+            self.list_el.set_text_content(Some(list_text));
         }
     }
 
     fn refresh_todos(&mut self) -> Result<(), JsError> {
-        let list_text = self.runtime.todo_list()?;
-        self.paint_todos(&list_text);
+        let list_text = self.runtime.call0("todo_list")?;
+        self.render_list_text(&list_text);
         self.trace_el
             .set_text_content(Some(&format!("todo_list() => {:?}", list_text)));
         Ok(())
@@ -59,27 +39,27 @@ impl TodoUiState {
     fn add_todo(&mut self) -> Result<(), JsError> {
         let clean = self.input_el.value().trim().to_string();
         if clean.is_empty() {
-            self.status_el
-                .set_text_content(Some("Enter a task before adding."));
+            self.status_el.set_text_content(Some(&self.status_need_input));
             return Ok(());
         }
 
-        let list_text = self.runtime.todo_add(&clean)?;
-        self.paint_todos(&list_text);
+        let list_text = self.runtime.call1("todo_add", &clean)?;
+        self.render_list_text(&list_text);
         self.trace_el
             .set_text_content(Some(&format!("todo_add({:?}) => {:?}", clean, list_text)));
         self.input_el.set_value("");
-        self.status_el
-            .set_text_content(Some(&format!("Added: {}", clean)));
+
+        let status = self.runtime.call1("todo_status_added", &clean)?;
+        self.status_el.set_text_content(Some(&status));
         Ok(())
     }
 
     fn clear_todos(&mut self) -> Result<(), JsError> {
-        let list_text = self.runtime.todo_clear()?;
-        self.paint_todos(&list_text);
+        let list_text = self.runtime.call0("todo_clear")?;
+        self.render_list_text(&list_text);
         self.trace_el
             .set_text_content(Some(&format!("todo_clear() => {:?}", list_text)));
-        self.status_el.set_text_content(Some("All tasks cleared."));
+        self.status_el.set_text_content(Some(&self.status_cleared));
         Ok(())
     }
 }
@@ -111,8 +91,30 @@ fn status_error(status_el: &HtmlElement, message: &str) {
     status_el.set_text_content(Some(message));
 }
 
+fn load_text_via_xhr(path: &str) -> Result<String, JsError> {
+    let xhr = XmlHttpRequest::new().map_err(|_| JsError::new("Failed to create XmlHttpRequest"))?;
+    xhr.open_with_async("GET", path, false)
+        .map_err(|_| JsError::new("Failed to open request for .ei source"))?;
+    xhr.send()
+        .map_err(|_| JsError::new("Failed to send request for .ei source"))?;
+
+    let status = xhr
+        .status()
+        .map_err(|_| JsError::new("Unable to read XHR status"))?;
+    if status != 200 {
+        return Err(JsError::new(&format!(
+            "Failed to load .ei source '{}' (HTTP {})",
+            path, status
+        )));
+    }
+
+    xhr.response_text()
+        .map_err(|_| JsError::new("Unable to read .ei response text"))?
+        .ok_or_else(|| JsError::new(".ei response body was empty"))
+}
+
 #[wasm_bindgen]
-pub fn start_todo_app() -> Result<(), JsError> {
+pub fn start_todo_app_from_ei(source_path: &str) -> Result<(), JsError> {
     let document = document()?;
 
     let status_el = html_el_by_id(&document, "status")?;
@@ -123,8 +125,16 @@ pub fn start_todo_app() -> Result<(), JsError> {
     let clear_btn = html_el_by_id(&document, "clearBtn")?;
     let input_el = input_el_by_id(&document, "todoInput")?;
 
+    let source = load_text_via_xhr(source_path)?;
+
     let mut runtime = EiriadRuntime::new();
-    runtime.todo_init()?;
+    let init_trace = runtime.eval(&source)?;
+    trace_el.set_text_content(Some(&format!("load {} => {:?}", source_path, init_trace)));
+
+    let empty_placeholder = runtime.call0("todo_empty_placeholder")?;
+    let status_need_input = runtime.call0("todo_status_need_input")?;
+    let status_cleared = runtime.call0("todo_status_cleared")?;
+    let status_ready = runtime.call0("todo_status_ready")?;
 
     let state = Rc::new(RefCell::new(TodoUiState {
         runtime,
@@ -132,13 +142,15 @@ pub fn start_todo_app() -> Result<(), JsError> {
         list_el,
         trace_el,
         input_el: input_el.clone(),
+        empty_placeholder,
+        status_need_input,
+        status_cleared,
     }));
 
     {
         let mut s = state.borrow_mut();
-        s.trace_el.set_text_content(Some("todo_init() => ok"));
         s.refresh_todos()?;
-        s.status_el.set_text_content(Some("Runtime ready"));
+        s.status_el.set_text_content(Some(&status_ready));
     }
 
     let add_state = Rc::clone(&state);
