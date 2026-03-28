@@ -10,6 +10,8 @@ pub enum Value {
     Float(f64),
     Bool(bool),
     Str(String),
+    Request(HttpRequestValue),
+    Response(HttpResponseValue),
     Some(Box<Value>),
     None,
     Ok(Box<Value>),
@@ -25,6 +27,19 @@ pub struct UserFunction {
     captured: HashMap<String, Binding>,
 }
 
+#[derive(Debug, Clone)]
+pub struct HttpRequestValue {
+    method: String,
+    path: String,
+    body: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct HttpResponseValue {
+    status: u16,
+    body: String,
+}
+
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -32,6 +47,8 @@ impl fmt::Display for Value {
             Value::Float(v) => write!(f, "{}", v),
             Value::Bool(v) => write!(f, "{}", v),
             Value::Str(v) => write!(f, "{}", v),
+            Value::Request(v) => write!(f, "Request({}, {})", v.method, v.path),
+            Value::Response(v) => write!(f, "Response({}, {})", v.status, v.body),
             Value::Some(v) => write!(f, "Some({})", v),
             Value::None => write!(f, "None"),
             Value::Ok(v) => write!(f, "Ok({})", v),
@@ -331,12 +348,92 @@ impl Runtime {
                     Value::Float(_) => "Float",
                     Value::Bool(_) => "Bool",
                     Value::Str(_) => "Str",
+                    Value::Request(_) => "Request",
+                    Value::Response(_) => "Response",
                     Value::Some(_) | Value::None => "Option",
                     Value::Ok(_) | Value::Err(_) => "Result",
                     Value::Function(_) => "fn",
                     Value::Unit => "()",
                 };
                 Ok(Value::Str(kind.to_string()))
+            }
+            "serve" => {
+                if args.len() != 2 {
+                    return Err(EiriadError::new("serve expects exactly 2 arguments"));
+                }
+                let port = match args[0] {
+                    Value::Int(v) if (1..=65535).contains(&v) => v as u16,
+                    Value::Int(_) => {
+                        return Err(EiriadError::new("serve port must be between 1 and 65535"));
+                    }
+                    _ => return Err(EiriadError::new("serve expects Int port as first argument")),
+                };
+
+                let handler = match &args[1] {
+                    Value::Function(func) => func.clone(),
+                    _ => {
+                        return Err(EiriadError::new(
+                            "serve expects function(request) as second argument",
+                        ));
+                    }
+                };
+
+                eiriad_serve(self, port, &handler)
+            }
+            "request_method" => {
+                if args.len() != 1 {
+                    return Err(EiriadError::new("request_method expects exactly 1 argument"));
+                }
+                match &args[0] {
+                    Value::Request(req) => Ok(Value::Str(req.method.clone())),
+                    _ => Err(EiriadError::new("request_method expects Request value")),
+                }
+            }
+            "request_path" => {
+                if args.len() != 1 {
+                    return Err(EiriadError::new("request_path expects exactly 1 argument"));
+                }
+                match &args[0] {
+                    Value::Request(req) => Ok(Value::Str(req.path.clone())),
+                    _ => Err(EiriadError::new("request_path expects Request value")),
+                }
+            }
+            "request_body" => {
+                if args.len() != 1 {
+                    return Err(EiriadError::new("request_body expects exactly 1 argument"));
+                }
+                match &args[0] {
+                    Value::Request(req) => Ok(Value::Str(req.body.clone())),
+                    _ => Err(EiriadError::new("request_body expects Request value")),
+                }
+            }
+            "response" => {
+                if args.len() != 2 {
+                    return Err(EiriadError::new("response expects exactly 2 arguments"));
+                }
+
+                let status = match args[0] {
+                    Value::Int(v) if (100..=599).contains(&v) => v as u16,
+                    Value::Int(_) => {
+                        return Err(EiriadError::new("response status must be between 100 and 599"));
+                    }
+                    _ => {
+                        return Err(EiriadError::new(
+                            "response expects Int status as first argument",
+                        ));
+                    }
+                };
+
+                let body = match &args[1] {
+                    Value::Str(s) => s.clone(),
+                    _ => {
+                        return Err(EiriadError::new(
+                            "response expects Str body as second argument",
+                        ));
+                    }
+                };
+
+                Ok(Value::Response(HttpResponseValue { status, body }))
             }
             "fetch" | "http_get" => {
                 if args.len() != 1 {
@@ -456,6 +553,8 @@ fn truthy(v: &Value) -> bool {
         Value::Int(n) => *n != 0,
         Value::Float(n) => *n != 0.0,
         Value::Str(s) => !s.is_empty(),
+        Value::Request(_) => true,
+        Value::Response(_) => true,
         Value::Some(_) => true,
         Value::None => false,
         Value::Ok(_) => true,
@@ -471,6 +570,10 @@ fn equals(a: &Value, b: &Value) -> bool {
         (Value::Float(x), Value::Float(y)) => x == y,
         (Value::Bool(x), Value::Bool(y)) => x == y,
         (Value::Str(x), Value::Str(y)) => x == y,
+        (Value::Request(x), Value::Request(y)) => {
+            x.method == y.method && x.path == y.path && x.body == y.body
+        }
+        (Value::Response(x), Value::Response(y)) => x.status == y.status && x.body == y.body,
         (Value::Some(x), Value::Some(y)) => equals(x, y),
         (Value::None, Value::None) => true,
         (Value::Ok(x), Value::Ok(y)) => equals(x, y),
@@ -479,6 +582,58 @@ fn equals(a: &Value, b: &Value) -> bool {
         (Value::Unit, Value::Unit) => true,
         _ => false,
     }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn eiriad_serve(runtime: &mut Runtime, port: u16, handler: &UserFunction) -> EiriadResult<Value> {
+    use tiny_http::{Response, Server, StatusCode};
+
+    let addr = format!("0.0.0.0:{}", port);
+    let server = Server::http(&addr)
+        .map_err(|e| EiriadError::new(format!("serve failed to bind {}: {}", addr, e)))?;
+
+    for mut req in server.incoming_requests() {
+        let mut body = String::new();
+        if let Err(e) = req.as_reader().read_to_string(&mut body) {
+            body = format!("<non-utf8 body: {}>", e);
+        }
+
+        let req_value = Value::Request(HttpRequestValue {
+            method: req.method().as_str().to_string(),
+            path: req.url().to_string(),
+            body,
+        });
+
+        let (status, response_body) = match runtime.call_user_function(handler, &[req_value]) {
+            Ok(Value::Response(resp)) => (resp.status, resp.body),
+            Ok(Value::Str(body)) => (200u16, body),
+            Ok(Value::Unit) => (204u16, String::new()),
+            Ok(other) => (
+                500u16,
+                format!(
+                    "handler must return response(status, body), Str, or Unit; got {}",
+                    other
+                ),
+            ),
+            Err(e) => (500u16, format!("handler error: {}", e)),
+        };
+
+        let response = Response::from_string(response_body).with_status_code(StatusCode(status));
+        let _ = req.respond(response);
+    }
+
+    Ok(Value::Unit)
+}
+
+#[cfg(target_arch = "wasm32")]
+fn eiriad_serve(
+    _runtime: &mut Runtime,
+    _port: u16,
+    _handler: &UserFunction,
+) -> EiriadResult<Value> {
+    Err(EiriadError::new(
+        "serve is not available in wasm/browser runtime",
+    ))
 }
 
 fn to_f64(v: &Value) -> EiriadResult<f64> {

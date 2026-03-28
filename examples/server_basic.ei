@@ -1,0 +1,9 @@
+fn app(req) {
+	let method = request_method(req)
+	let path = request_path(req)
+	let body = request_body(req)
+	response(200, "method=" + method + " path=" + path + " body=" + body)
+}
+
+print("listening on http://127.0.0.1:3000")
+serve(3000, app)

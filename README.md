@@ -17,6 +17,7 @@ It runs in two places:
 - [Quick Start](#quick-start)
 - [Linux Installation](#linux-installation)
 - [CLI Usage](#cli-usage)
+- [Core Server API](#core-server-api)
 - [Browser and WASM Usage](#browser-and-wasm-usage)
 - [Tutorial: Write and Run an EIRIAD WASM App](#tutorial-write-and-run-an-eiriad-wasm-app)
 - [HTTP in EIRIAD](#http-in-eiriad)
@@ -44,6 +45,7 @@ checker and a shared runtime for both CLI and browser/WASM execution.
 - Option/Result helpers: `unwrap_or`, `is_some`, `is_none`, `is_ok`, `is_err`
 - Match expressions with patterns: `Some(_)`, `None`, `Ok(_)`, `Err(_)`, `_`
 - Built-ins: `print`, `len`, `sqrt`, `typeof`, `fetch`, HTTP built-ins
+- Core server built-ins (native/CLI): `serve`, `request_method`, `request_path`, `request_body`, `response`
 - Terminators: newline or `;`
 - Trailing `\` line continuation
 
@@ -62,6 +64,8 @@ checker and a shared runtime for both CLI and browser/WASM execution.
 | Print | `print(value)` | `print("hello")` |
 | HTTP GET | `http_get(url)` | `http_get("https://httpbin.org/get")` |
 | HTTP with body | `http_post(url, body)` | `http_post("https://httpbin.org/post", "{\"x\":1}")` |
+| Start server | `serve(port, handler)` | `serve(3000, app)` |
+| Build response | `response(status, body)` | `response(200, "ok")` |
 
 ## Quick Start
 
@@ -148,6 +152,54 @@ REPL commands:
 - `:quit` / `:q`
 - `:env`
 - `:reset`
+
+## Core Server API
+
+Eiriad now includes a built-in native server API inspired by Node.js/Bun style
+ergonomics for quick backend scripts.
+
+Built-ins:
+
+- `serve(port, handler)`
+- `request_method(req)`
+- `request_path(req)`
+- `request_body(req)`
+- `response(status, body)`
+
+Example (`examples/server_basic.ei`):
+
+```ei
+fn app(req) {
+	let method = request_method(req)
+	let path = request_path(req)
+	let body = request_body(req)
+	response(200, "method=" + method + " path=" + path + " body=" + body)
+}
+
+print("listening on http://127.0.0.1:3000")
+serve(3000, app)
+```
+
+Run it:
+
+```bash
+eiriad examples/server_basic.ei
+```
+
+Then test in another terminal:
+
+```bash
+curl -X POST http://127.0.0.1:3000/hello -d 'ping'
+```
+
+Notes:
+
+- `serve` is currently native/CLI only.
+- Browser/WASM runtime cannot open listening sockets.
+- Handler can return:
+  - `response(status, body)`
+  - `Str` (treated as HTTP 200)
+  - `()` (treated as HTTP 204)
 
 ## Browser and WASM Usage
 

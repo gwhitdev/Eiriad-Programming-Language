@@ -9,6 +9,8 @@ enum Type {
     Float,
     Bool,
     Str,
+    Request,
+    Response,
     Unit,
     Fn(usize),
     Option(Box<Type>),
@@ -369,6 +371,36 @@ impl Checker {
                 expect_arg_count(name, args, 1)?;
                 Ok(Type::Str)
             }
+            "serve" => {
+                expect_arg_count(name, args, 2)?;
+                let port_ok = args[0] == Type::Int || args[0] == Type::Unknown;
+                let handler_ok = matches!(args[1], Type::Fn(1) | Type::Unknown);
+                if port_ok && handler_ok {
+                    Ok(Type::Unit)
+                } else {
+                    Err(EiriadError::new(
+                        "serve expects (Int port, fn(request) -> response)",
+                    ))
+                }
+            }
+            "request_method" | "request_path" | "request_body" => {
+                expect_arg_count(name, args, 1)?;
+                if args[0] == Type::Request || args[0] == Type::Unknown {
+                    Ok(Type::Str)
+                } else {
+                    Err(EiriadError::new(format!("{} expects Request", name)))
+                }
+            }
+            "response" => {
+                expect_arg_count(name, args, 2)?;
+                let status_ok = args[0] == Type::Int || args[0] == Type::Unknown;
+                let body_ok = args[1] == Type::Str || args[1] == Type::Unknown;
+                if status_ok && body_ok {
+                    Ok(Type::Response)
+                } else {
+                    Err(EiriadError::new("response expects (Int status, Str body)"))
+                }
+            }
             "fetch" | "http_get" | "http_delete" | "http_head" | "http_options" => {
                 expect_arg_count(name, args, 1)?;
                 if args[0] == Type::Str || args[0] == Type::Unknown {
@@ -488,6 +520,8 @@ fn compatible(expected: &Type, found: &Type) -> bool {
         (Type::Fn(a), Type::Fn(b)) => a == b,
         (Type::Option(a), Type::Option(b)) => compatible(a, b),
         (Type::Result(a1, a2), Type::Result(b1, b2)) => compatible(a1, b1) && compatible(a2, b2),
+        (Type::Request, Type::Request) => true,
+        (Type::Response, Type::Response) => true,
         _ => false,
     }
 }
@@ -498,6 +532,8 @@ fn type_name(ty: &Type) -> &'static str {
         Type::Float => "Float",
         Type::Bool => "Bool",
         Type::Str => "Str",
+        Type::Request => "Request",
+        Type::Response => "Response",
         Type::Unit => "()",
         Type::Fn(_) => "fn(_)",
         Type::Option(_) => "Option<_>",
