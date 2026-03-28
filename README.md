@@ -22,16 +22,54 @@ This project contains a baseline EIRIAD runtime implemented in Rust with two int
 
 ## CLI usage
 
-Build and run REPL:
+Run REPL (development):
 
 ```bash
 cargo run --bin eiriad-repl
 ```
 
-Execute a file:
+`eiriad-repl` is a compatibility entrypoint that delegates to the same shared
+CLI implementation as `eiriad` (REPL and file mode only).
+
+Execute a file (development):
 
 ```bash
 cargo run --bin eiriad-repl -- examples/demo.ei
+```
+
+### Direct script execution (like `python`/`php`)
+
+Install the `eiriad` command once:
+
+```bash
+cargo install --path . --force
+```
+
+Then run scripts directly:
+
+```bash
+eiriad examples/demo.ei
+```
+
+Other useful modes:
+
+```bash
+eiriad -c 'print("hello")'
+cat examples/demo.ei | eiriad -
+```
+
+Shebang usage:
+
+```ei
+#!/usr/bin/env eiriad
+print("hello from shebang")
+```
+
+Make executable and run:
+
+```bash
+chmod +x hello.ei
+./hello.ei
 ```
 
 REPL commands:

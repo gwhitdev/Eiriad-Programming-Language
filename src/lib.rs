@@ -1,5 +1,6 @@
 mod ast;
 mod checker;
+pub mod cli_common;
 mod error;
 mod lexer;
 mod parser;
