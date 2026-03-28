@@ -108,6 +108,16 @@
         margin-top: 8px;
         font-size: 12px;
       }
+
+      .small a {
+        color: var(--accent);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .small a:hover {
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
@@ -124,6 +134,7 @@ x |> sqrt()</textarea>
             <button id="resetBtn" class="secondary">Reset Runtime</button>
           </div>
           <div class="small" id="status">Loading wasm runtime...</div>
+          <div class="small">Try the <a href="./todo.html">WASM TODO app example</a>.</div>
         </div>
         <div class="panel">
           <pre id="out"></pre>

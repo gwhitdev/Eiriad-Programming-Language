@@ -2,8 +2,30 @@
 
 This project contains a baseline EIRIAD runtime implemented in Rust with two interfaces:
 
-- Command-line REPL (`eiriad-repl` binary)
+- Command-line runtime (`eiriad` binary)
 - Browser runtime via WebAssembly (`EiriadRuntime` binding)
+
+## Quick Start
+
+```bash
+# Install the CLI once
+cargo install --path . --force
+
+# Start the REPL
+eiriad
+
+# Run a script
+eiriad examples/demo.ei
+```
+
+### WASM Quick Start
+
+```bash
+# Build and serve the browser runtime
+make wasm-demo
+```
+
+Open `http://localhost:8080/web/`.
 
 ## What this MVP supports
 
@@ -22,30 +44,19 @@ This project contains a baseline EIRIAD runtime implemented in Rust with two int
 
 ## CLI usage
 
-Run REPL (development):
-
-```bash
-cargo run --bin eiriad-repl
-```
-
-`eiriad-repl` is a compatibility entrypoint that delegates to the same shared
-CLI implementation as `eiriad` (REPL and file mode only).
-
-Execute a file (development):
-
-```bash
-cargo run --bin eiriad-repl -- examples/demo.ei
-```
-
-### Direct script execution (like `python`/`php`)
-
 Install the `eiriad` command once:
 
 ```bash
 cargo install --path . --force
 ```
 
-Then run scripts directly:
+Run REPL:
+
+```bash
+eiriad
+```
+
+Execute a file:
 
 ```bash
 eiriad examples/demo.ei
@@ -57,6 +68,15 @@ Other useful modes:
 eiriad -c 'print("hello")'
 cat examples/demo.ei | eiriad -
 ```
+
+Development fallback (without install):
+
+```bash
+cargo run --bin eiriad -- examples/demo.ei
+```
+
+`eiriad-repl` is a compatibility entrypoint that delegates to the same shared
+CLI implementation as `eiriad` (REPL and file mode only).
 
 Shebang usage:
 
@@ -94,6 +114,11 @@ python3 -m http.server 8080
 ```
 
 4. Open `http://localhost:8080/web/`.
+
+WASM TODO example app:
+
+- `http://localhost:8080/web/todo.html`
+- Uses EIRIAD runtime state (`todo_text`) in wasm for add/list/clear actions.
 
 One-line wasm demo command:
 
@@ -144,7 +169,7 @@ let options = http_options("https://httpbin.org/get")
 Run any example with:
 
 ```bash
-cargo run --bin eiriad-repl -- examples/<file>.ei
+eiriad examples/<file>.ei
 ```
 
 Examples for each major functionality added:
@@ -239,3 +264,7 @@ make wasm-demo
 ```
 
 Then open `http://localhost:8080/web/`.
+
+To open the TODO sample directly after build/serve, visit:
+
+`http://localhost:8080/web/todo.html`
