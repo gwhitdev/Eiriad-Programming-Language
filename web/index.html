@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EIRIAD Browser REPL</title>
+    <style>
+      :root {
+        --bg: #f8f6f1;
+        --panel: #fffdf8;
+        --ink: #1f1b16;
+        --muted: #6a6258;
+        --accent: #c76a3a;
+        --border: #e6ded3;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Iosevka", "IBM Plex Mono", monospace;
+        background: radial-gradient(circle at top left, #fff7eb, var(--bg));
+        color: var(--ink);
+        min-height: 100vh;
+      }
+
+      .app {
+        max-width: 1000px;
+        margin: 40px auto;
+        padding: 0 16px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 24px;
+      }
+
+      p {
+        margin: 0 0 14px;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      @media (max-width: 800px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 10px 22px rgba(47, 34, 15, 0.06);
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 260px;
+        box-sizing: border-box;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px;
+        font-family: inherit;
+        font-size: 14px;
+        resize: vertical;
+        background: #fff;
+      }
+
+      pre {
+        margin: 0;
+        min-height: 260px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px;
+        background: #1d232d;
+        color: #d8f0d2;
+        overflow: auto;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 8px;
+        padding: 8px 12px;
+        cursor: pointer;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+      }
+
+      button.secondary {
+        background: #ddd5cb;
+        color: #2f2a24;
+      }
+
+      .small {
+        margin-top: 8px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <h1>EIRIAD Runtime in Browser</h1>
+      <p>Compile the WASM package, then evaluate EIRIAD snippets in the same runtime state.</p>
+      <div class="grid">
+        <div class="panel">
+          <textarea id="source">let x = 40 + 2
+print(x)
+x |> sqrt()</textarea>
+          <div class="controls">
+            <button id="runBtn">Run</button>
+            <button id="resetBtn" class="secondary">Reset Runtime</button>
+          </div>
+          <div class="small" id="status">Loading wasm runtime...</div>
+        </div>
+        <div class="panel">
+          <pre id="out"></pre>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

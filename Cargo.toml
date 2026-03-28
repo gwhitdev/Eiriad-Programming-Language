@@ -1,0 +1,20 @@
+[package]
+name = "eiriad"
+version = "0.1.0"
+edition = "2021"
+description = "EIRIAD runtime and REPL"
+license = "MIT"
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[[bin]]
+name = "eiriad-repl"
+path = "src/bin/eiriad_repl.rs"
+
+[features]
+default = []
+wasm = ["dep:wasm-bindgen"]
+
+[dependencies]
+wasm-bindgen = { version = "0.2", optional = true }

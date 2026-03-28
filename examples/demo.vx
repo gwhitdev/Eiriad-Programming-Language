@@ -1,0 +1,39 @@
+let x: Int = 40 + 2
+print(x)
+
+fn double(n) {
+	n * 2
+}
+print(double(21))
+
+let adder = (a, b) -> a + b
+print(adder(5, 7))
+
+mut count = 1
+count = count + 4
+print(count)
+
+let result = count |> sqrt()
+print(result)
+
+let maybe_name = None
+print(maybe_name |> unwrap_or("anonymous"))
+
+let ok_value = Ok(99)
+let err_value = Err("bad")
+print(ok_value |> unwrap_or(0))
+print(err_value |> unwrap_or(0))
+
+let from_match = match ok_value {
+	Ok(v) -> v
+	Err(_) -> 0
+}
+print(from_match)
+
+let from_option_match = match maybe_name {
+	Some(v) -> v
+	None -> "fallback"
+}
+print(from_option_match)
+
+result
