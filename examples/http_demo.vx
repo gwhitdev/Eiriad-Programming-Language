@@ -1,0 +1,9 @@
+let response = http_get("https://httpbin.org/get")
+
+let body = match response {
+  Ok(text) -> text
+  Err(e) -> "request failed: " + e
+}
+
+print(body)
+body

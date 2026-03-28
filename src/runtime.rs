@@ -335,6 +335,59 @@ impl Runtime {
                 };
                 Ok(Value::Str(kind.to_string()))
             }
+            "fetch" | "http_get" => {
+                if args.len() != 1 {
+                    return Err(EiriadError::new(format!(
+                        "{} expects exactly 1 argument",
+                        name
+                    )));
+                }
+                let url = match &args[0] {
+                    Value::Str(s) => s,
+                    _ => return Err(EiriadError::new(format!("{} expects Str URL", name))),
+                };
+                eiriad_http_request("GET", url, None)
+            }
+            "http_delete" | "http_head" | "http_options" => {
+                if args.len() != 1 {
+                    return Err(EiriadError::new(format!(
+                        "{} expects exactly 1 argument",
+                        name
+                    )));
+                }
+                let url = match &args[0] {
+                    Value::Str(s) => s,
+                    _ => return Err(EiriadError::new(format!("{} expects Str URL", name))),
+                };
+                let method = match name {
+                    "http_delete" => "DELETE",
+                    "http_head" => "HEAD",
+                    _ => "OPTIONS",
+                };
+                eiriad_http_request(method, url, None)
+            }
+            "http_post" | "http_put" | "http_patch" => {
+                if args.len() != 2 {
+                    return Err(EiriadError::new(format!(
+                        "{} expects exactly 2 arguments",
+                        name
+                    )));
+                }
+                let url = match &args[0] {
+                    Value::Str(s) => s,
+                    _ => return Err(EiriadError::new(format!("{} expects Str URL", name))),
+                };
+                let body = match &args[1] {
+                    Value::Str(s) => s,
+                    _ => return Err(EiriadError::new(format!("{} expects Str body", name))),
+                };
+                let method = match name {
+                    "http_post" => "POST",
+                    "http_put" => "PUT",
+                    _ => "PATCH",
+                };
+                eiriad_http_request(method, url, Some(body))
+            }
             "Some" => {
                 if args.len() != 1 {
                     return Err(EiriadError::new("Some expects exactly 1 argument"));
@@ -532,5 +585,78 @@ fn ord_to_i8(ord: std::cmp::Ordering) -> i8 {
         std::cmp::Ordering::Less => -1,
         std::cmp::Ordering::Equal => 0,
         std::cmp::Ordering::Greater => 1,
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn eiriad_http_request(method: &str, url: &str, body: Option<&str>) -> EiriadResult<Value> {
+    let method = reqwest::Method::from_bytes(method.as_bytes())
+        .map_err(|e| EiriadError::new(format!("invalid HTTP method: {}", e)))?;
+
+    let client = reqwest::blocking::Client::new();
+    let mut request = client.request(method, url);
+    if let Some(body) = body {
+        request = request.body(body.to_string());
+    }
+
+    let response = request
+        .send()
+        .map_err(|e| EiriadError::new(format!("HTTP request failed: {}", e)))?;
+
+    let status = response.status();
+    let body = response
+        .text()
+        .map_err(|e| EiriadError::new(format!("HTTP response read failed: {}", e)))?;
+
+    if status.is_success() {
+        Ok(Value::Ok(Box::new(Value::Str(body))))
+    } else {
+        Ok(Value::Err(Box::new(Value::Str(format!(
+            "HTTP {}: {}",
+            status.as_u16(),
+            body
+        )))))
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn eiriad_http_request(method: &str, url: &str, body: Option<&str>) -> EiriadResult<Value> {
+    use web_sys::XmlHttpRequest;
+
+    let xhr = XmlHttpRequest::new()
+        .map_err(|e| EiriadError::new(format!("XMLHttpRequest init failed: {:?}", e)))?;
+
+    xhr.open_with_async(method, url, false)
+        .map_err(|e| EiriadError::new(format!("XMLHttpRequest open failed: {:?}", e)))?;
+
+    if body.is_some() {
+        xhr.set_request_header("Content-Type", "application/json")
+            .map_err(|e| EiriadError::new(format!("set_request_header failed: {:?}", e)))?;
+    }
+
+    match body {
+        Some(payload) => xhr
+            .send_with_opt_str(Some(payload))
+            .map_err(|e| EiriadError::new(format!("XMLHttpRequest send failed: {:?}", e)))?,
+        None => xhr
+            .send()
+            .map_err(|e| EiriadError::new(format!("XMLHttpRequest send failed: {:?}", e)))?,
+    }
+
+    let status = xhr
+        .status()
+        .map_err(|e| EiriadError::new(format!("XMLHttpRequest status failed: {:?}", e)))?;
+    let text = xhr
+        .response_text()
+        .map_err(|e| EiriadError::new(format!("XMLHttpRequest response read failed: {:?}", e)))?
+        .unwrap_or_default();
+
+    if (200..300).contains(&status) {
+        Ok(Value::Ok(Box::new(Value::Str(text))))
+    } else {
+        Ok(Value::Err(Box::new(Value::Str(format!(
+            "HTTP {}: {}",
+            status, text
+        )))))
     }
 }

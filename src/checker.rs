@@ -363,6 +363,27 @@ impl Checker {
                 expect_arg_count(name, args, 1)?;
                 Ok(Type::Str)
             }
+            "fetch" | "http_get" | "http_delete" | "http_head" | "http_options" => {
+                expect_arg_count(name, args, 1)?;
+                if args[0] == Type::Str || args[0] == Type::Unknown {
+                    Ok(Type::Result(Box::new(Type::Str), Box::new(Type::Str)))
+                } else {
+                    Err(EiriadError::new(format!("{} expects Str URL", name)))
+                }
+            }
+            "http_post" | "http_put" | "http_patch" => {
+                expect_arg_count(name, args, 2)?;
+                let url_ok = args[0] == Type::Str || args[0] == Type::Unknown;
+                let body_ok = args[1] == Type::Str || args[1] == Type::Unknown;
+                if url_ok && body_ok {
+                    Ok(Type::Result(Box::new(Type::Str), Box::new(Type::Str)))
+                } else {
+                    Err(EiriadError::new(format!(
+                        "{} expects (Str URL, Str body)",
+                        name
+                    )))
+                }
+            }
             "Some" => {
                 expect_arg_count(name, args, 1)?;
                 Ok(Type::Option(Box::new(args[0].clone())))
