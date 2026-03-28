@@ -350,10 +350,13 @@ impl Parser {
     fn parse_block_expr(&mut self) -> EiriadResult<Expr> {
         self.expect_token(TokenKind::LBrace, "Expected '{'")?;
         self.skip_terminators();
-        let expr = self.parse_expr()?;
-        self.skip_terminators();
+        let mut stmts = Vec::new();
+        while !matches!(self.peek_kind(), TokenKind::RBrace | TokenKind::Eof) {
+            stmts.push(self.parse_stmt()?);
+            self.skip_terminators();
+        }
         self.expect_token(TokenKind::RBrace, "Expected '}'")?;
-        Ok(expr)
+        Ok(Expr::Block { stmts })
     }
 
     fn parse_match_expr(&mut self) -> EiriadResult<Expr> {

@@ -46,6 +46,9 @@ pub enum Expr {
         value: Box<Expr>,
         arms: Vec<MatchArm>,
     },
+    Block {
+        stmts: Vec<Stmt>,
+    },
 }
 
 #[derive(Debug, Clone)]

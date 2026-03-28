@@ -196,6 +196,23 @@ impl Checker {
                 let value_ty = self.check_expr(value)?;
                 self.check_match_arms(&value_ty, arms)
             }
+            Expr::Block { stmts } => {
+                let saved_env = self.env.clone();
+                let mut last_ty = Type::Unit;
+                for stmt in stmts {
+                    match stmt {
+                        Stmt::Expr(expr) => {
+                            last_ty = self.check_expr(expr)?;
+                        }
+                        _ => {
+                            self.check_stmt(stmt)?;
+                            last_ty = Type::Unit;
+                        }
+                    }
+                }
+                self.env = saved_env;
+                Ok(last_ty)
+            }
         }
     }
 

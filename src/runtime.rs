@@ -235,6 +235,15 @@ impl Runtime {
                 let matched = self.eval_expr(value)?;
                 self.eval_match_arms(&matched, arms)
             }
+            Expr::Block { stmts } => {
+                let saved_env = self.env.clone();
+                let mut last = Value::Unit;
+                for stmt in stmts {
+                    last = self.eval_stmt(stmt)?;
+                }
+                self.env = saved_env;
+                Ok(last)
+            }
         }
     }
 
@@ -382,7 +391,9 @@ impl Runtime {
             }
             "request_method" => {
                 if args.len() != 1 {
-                    return Err(EiriadError::new("request_method expects exactly 1 argument"));
+                    return Err(EiriadError::new(
+                        "request_method expects exactly 1 argument",
+                    ));
                 }
                 match &args[0] {
                     Value::Request(req) => Ok(Value::Str(req.method.clone())),
@@ -415,7 +426,9 @@ impl Runtime {
                 let status = match args[0] {
                     Value::Int(v) if (100..=599).contains(&v) => v as u16,
                     Value::Int(_) => {
-                        return Err(EiriadError::new("response status must be between 100 and 599"));
+                        return Err(EiriadError::new(
+                            "response status must be between 100 and 599",
+                        ));
                     }
                     _ => {
                         return Err(EiriadError::new(
