@@ -6,6 +6,7 @@ async function boot() {
   try {
     await init();
     start_todo_app();
+    statusEl.textContent = "Runtime ready (WASM UI wiring)";
   } catch (error) {
     statusEl.textContent = `Failed to load wasm runtime: ${error}`;
   }

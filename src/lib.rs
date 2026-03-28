@@ -34,7 +34,7 @@ mod wasm_api {
     use wasm_bindgen::JsCast;
     use web_sys::{window, Document, HtmlElement, HtmlInputElement, KeyboardEvent};
 
-    use crate::{eval_source, Runtime};
+    use crate::{parse_program, Runtime};
 
     fn escape_for_eiriad_string(value: &str) -> String {
         value
@@ -156,6 +156,13 @@ mod wasm_api {
 
     #[wasm_bindgen]
     impl EiriadRuntime {
+        fn eval_in_runtime(&mut self, source: &str) -> Result<crate::ExecResult, JsError> {
+            let program = parse_program(source).map_err(|e| JsError::new(&e.to_string()))?;
+            self.inner
+                .exec_program(&program)
+                .map_err(|e| JsError::new(&e.to_string()))
+        }
+
         #[wasm_bindgen(constructor)]
         pub fn new() -> EiriadRuntime {
             EiriadRuntime {
@@ -169,8 +176,7 @@ mod wasm_api {
 
         // Returns newline-joined printed output and the final expression value.
         pub fn eval(&mut self, source: &str) -> Result<String, JsError> {
-            let result =
-                eval_source(&mut self.inner, source).map_err(|e| JsError::new(&e.to_string()))?;
+            let result = self.eval_in_runtime(source)?;
 
             let mut lines = result.output;
             lines.push(format!("=> {}", result.last_value));
@@ -179,15 +185,13 @@ mod wasm_api {
 
         // Returns only the final expression value as a string.
         pub fn eval_value(&mut self, source: &str) -> Result<String, JsError> {
-            let result =
-                eval_source(&mut self.inner, source).map_err(|e| JsError::new(&e.to_string()))?;
+            let result = self.eval_in_runtime(source)?;
             Ok(result.last_value.to_string())
         }
 
         // Initializes TODO state in the runtime.
         pub fn todo_init(&mut self) -> Result<(), JsError> {
-            eval_source(&mut self.inner, "let mut todo_text = \"\"")
-                .map_err(|e| JsError::new(&e.to_string()))?;
+            self.eval_in_runtime("mut todo_text = \"\"")?;
             Ok(())
         }
 
