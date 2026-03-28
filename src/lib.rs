@@ -9,9 +9,9 @@ mod runtime;
 pub use error::{EiriadError, EiriadResult};
 pub use runtime::{ExecResult, Runtime, Value};
 
+use checker::Checker;
 use lexer::Lexer;
 use parser::Parser;
-use checker::Checker;
 
 pub fn parse_program(source: &str) -> EiriadResult<Vec<ast::Stmt>> {
     let tokens = Lexer::new(source).lex()?;
@@ -60,8 +60,8 @@ mod wasm_api {
 
         // Returns newline-joined printed output and the final expression value.
         pub fn eval(&mut self, source: &str) -> Result<String, JsError> {
-            let result = eval_source(&mut self.inner, source)
-                .map_err(|e| JsError::new(&e.to_string()))?;
+            let result =
+                eval_source(&mut self.inner, source).map_err(|e| JsError::new(&e.to_string()))?;
 
             let mut lines = result.output;
             lines.push(format!("=> {}", result.last_value));
@@ -70,8 +70,8 @@ mod wasm_api {
 
         // Returns only the final expression value as a string.
         pub fn eval_value(&mut self, source: &str) -> Result<String, JsError> {
-            let result = eval_source(&mut self.inner, source)
-                .map_err(|e| JsError::new(&e.to_string()))?;
+            let result =
+                eval_source(&mut self.inner, source).map_err(|e| JsError::new(&e.to_string()))?;
             Ok(result.last_value.to_string())
         }
 
@@ -89,10 +89,7 @@ mod wasm_api {
                 return self.todo_list();
             }
 
-            let source = format!(
-                "todo_text = todo_text + \"- {}\\n\"\ntodo_text",
-                clean
-            );
+            let source = format!("todo_text = todo_text + \"- {}\\n\"\ntodo_text", clean);
             self.eval_value(&source)
         }
 

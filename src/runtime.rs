@@ -88,7 +88,10 @@ impl Runtime {
             .iter()
             .map(|(name, binding)| {
                 let mutability = if binding.mutable { "mut" } else { "let" };
-                (name.clone(), format!("{} = {} ({})", name, binding.value, mutability))
+                (
+                    name.clone(),
+                    format!("{} = {} ({})", name, binding.value, mutability),
+                )
             })
             .collect();
         entries.sort_by(|a, b| a.0.cmp(&b.0));
@@ -442,10 +445,7 @@ impl Runtime {
                 }
                 Ok(Value::Bool(matches!(args[0], Value::Err(_))))
             }
-            _ => Err(EiriadError::new(format!(
-                "Unknown function '{}'",
-                name
-            ))),
+            _ => Err(EiriadError::new(format!("Unknown function '{}'", name))),
         }
     }
 }

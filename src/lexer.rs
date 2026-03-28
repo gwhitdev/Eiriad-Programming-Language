@@ -199,10 +199,7 @@ impl<'a> Lexer<'a> {
                     tokens.push(self.lex_ident_or_keyword());
                 }
                 _ => {
-                    return Err(EiriadError::new(format!(
-                        "Unexpected character: {}",
-                        c
-                    )));
+                    return Err(EiriadError::new(format!("Unexpected character: {}", c)));
                 }
             }
         }

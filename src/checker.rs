@@ -173,7 +173,9 @@ impl Checker {
                                 expect_arg_count(name, &arg_types, arity)?;
                                 return Ok(Type::Unknown);
                             }
-                            _ => return Err(EiriadError::new(format!("'{}' is not callable", name))),
+                            _ => {
+                                return Err(EiriadError::new(format!("'{}' is not callable", name)))
+                            }
                         }
                     }
 
@@ -290,7 +292,9 @@ impl Checker {
                         Ok(Type::Int)
                     }
                 } else {
-                    Err(EiriadError::new("Numeric operator expects numeric operands"))
+                    Err(EiriadError::new(
+                        "Numeric operator expects numeric operands",
+                    ))
                 }
             }
             BinaryOp::Div => {
@@ -320,7 +324,9 @@ impl Checker {
                 if ordered(left, right) {
                     Ok(Type::Bool)
                 } else {
-                    Err(EiriadError::new("Comparison expects compatible ordered operands"))
+                    Err(EiriadError::new(
+                        "Comparison expects compatible ordered operands",
+                    ))
                 }
             }
             BinaryOp::And | BinaryOp::Or => {
@@ -390,11 +396,17 @@ impl Checker {
             }
             "Ok" => {
                 expect_arg_count(name, args, 1)?;
-                Ok(Type::Result(Box::new(args[0].clone()), Box::new(Type::Unknown)))
+                Ok(Type::Result(
+                    Box::new(args[0].clone()),
+                    Box::new(Type::Unknown),
+                ))
             }
             "Err" => {
                 expect_arg_count(name, args, 1)?;
-                Ok(Type::Result(Box::new(Type::Unknown), Box::new(args[0].clone())))
+                Ok(Type::Result(
+                    Box::new(Type::Unknown),
+                    Box::new(args[0].clone()),
+                ))
             }
             "unwrap_or" => {
                 expect_arg_count(name, args, 2)?;
@@ -403,17 +415,23 @@ impl Checker {
                         if compatible(inner, &args[1]) {
                             Ok((**inner).clone())
                         } else {
-                            Err(EiriadError::new("unwrap_or default type must match Option<T>"))
+                            Err(EiriadError::new(
+                                "unwrap_or default type must match Option<T>",
+                            ))
                         }
                     }
                     Type::Result(ok, _) => {
                         if compatible(ok, &args[1]) {
                             Ok((**ok).clone())
                         } else {
-                            Err(EiriadError::new("unwrap_or default type must match Result<T, E>"))
+                            Err(EiriadError::new(
+                                "unwrap_or default type must match Result<T, E>",
+                            ))
                         }
                     }
-                    _ => Err(EiriadError::new("unwrap_or expects Option<T> or Result<T, E>")),
+                    _ => Err(EiriadError::new(
+                        "unwrap_or expects Option<T> or Result<T, E>",
+                    )),
                 }
             }
             "is_some" | "is_none" => {
