@@ -1,0 +1,14 @@
+let maybe_name = Some("Cariad")
+let name = match maybe_name {
+  Some(v) -> v
+  None -> "fallback"
+}
+print(name)
+
+let http_like = Err("network")
+let status = match http_like {
+  Ok(_) -> "ok"
+  Err(e) -> "error: " + e
+}
+print(status)
+status

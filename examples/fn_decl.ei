@@ -1,0 +1,6 @@
+fn square(n) {
+  n * n
+}
+
+print(square(9))
+square(4)

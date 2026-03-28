@@ -1,0 +1,14 @@
+let post_r = http_post("https://httpbin.org/post", "{\"x\":1}")
+let put_r = http_put("https://httpbin.org/put", "replace")
+let patch_r = http_patch("https://httpbin.org/patch", "patch")
+let delete_r = http_delete("https://httpbin.org/delete")
+let head_r = http_head("https://httpbin.org/get")
+let options_r = http_options("https://httpbin.org/get")
+
+print(typeof(post_r))
+print(typeof(put_r))
+print(typeof(patch_r))
+print(typeof(delete_r))
+print(typeof(head_r))
+print(typeof(options_r))
+options_r

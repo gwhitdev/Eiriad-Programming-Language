@@ -1,0 +1,14 @@
+let a = Some(5)
+let b = None
+let c = Ok("done")
+let d = Err("boom")
+
+print(a |> unwrap_or(0))
+print(b |> unwrap_or(0))
+print(c |> unwrap_or("default"))
+print(d |> unwrap_or("default"))
+
+print(is_some(a))
+print(is_none(b))
+print(is_ok(c))
+is_err(d)

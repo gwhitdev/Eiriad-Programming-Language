@@ -31,7 +31,7 @@ cargo run --bin eiriad-repl
 Execute a file:
 
 ```bash
-cargo run --bin eiriad-repl -- examples/demo.vx
+cargo run --bin eiriad-repl -- examples/demo.ei
 ```
 
 REPL commands:
@@ -79,7 +79,7 @@ make wasm-demo
 
 ## HTTP Example
 
-```vx
+```ei
 let response = http_get("https://httpbin.org/get")
 
 let body = match response {
@@ -92,7 +92,7 @@ print(body)
 
 Additional method examples:
 
-```vx
+```ei
 let created = http_post("https://httpbin.org/post", "{\"name\":\"eiriad\"}")
 let replaced = http_put("https://httpbin.org/put", "replace")
 let changed = http_patch("https://httpbin.org/patch", "patch")
@@ -100,6 +100,25 @@ let removed = http_delete("https://httpbin.org/delete")
 let headers_only = http_head("https://httpbin.org/get")
 let options = http_options("https://httpbin.org/get")
 ```
+
+## Examples Index
+
+Run any example with:
+
+```bash
+cargo run --bin eiriad-repl -- examples/<file>.ei
+```
+
+Examples for each major functionality added:
+
+- Function declarations: `examples/fn_decl.ei`
+- Lambdas and closures: `examples/lambda_closure.ei`
+- Match with Option/Result patterns: `examples/match_option_result.ei`
+- Option/Result helpers (`unwrap_or`, `is_*`): `examples/option_result_helpers.ei`
+- HTTP GET + fetch alias: `examples/http_get_fetch.ei`
+- Full HTTP methods (`POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`): `examples/http_methods.ei`
+- Line continuation with trailing `\`: `examples/line_continuation.ei`
+- Combined language walkthrough: `examples/demo.ei`
 
 ## Extending EIRIAD
 
@@ -109,7 +128,7 @@ EIRIAD is organized as a small interpreter pipeline, so most language features f
 2. Add tokenization/parsing (`src/lexer.rs`, `src/parser.rs`)
 3. Add static validation (`src/checker.rs`)
 4. Add runtime behavior (`src/runtime.rs`)
-5. Add an example script (`examples/*.vx`) and run it in REPL
+5. Add an example script (`examples/*.ei`) and run it in REPL
 
 ### Example 1: Add a new built-in function
 
@@ -144,7 +163,7 @@ Add runtime behavior in `src/runtime.rs` inside `call_builtin`:
 
 Try it:
 
-```vx
+```ei
 print(upper("eiriad"))
 ```
 

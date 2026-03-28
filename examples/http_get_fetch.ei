@@ -1,0 +1,12 @@
+let by_http_get = http_get("https://httpbin.org/get")
+let by_fetch = fetch("https://httpbin.org/get")
+
+print(typeof(by_http_get))
+print(typeof(by_fetch))
+
+let body = match by_fetch {
+  Ok(text) -> text
+  Err(e) -> "request failed: " + e
+}
+print(body)
+body
