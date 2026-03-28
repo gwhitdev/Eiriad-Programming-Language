@@ -1,5 +1,9 @@
 # EIRIAD Rust Runtime + REPL
 
+[![Rust CI](https://github.com/gwhitdev/Eiriad-Programming-Language/actions/workflows/ci.yml/badge.svg)](https://github.com/gwhitdev/Eiriad-Programming-Language/actions/workflows/ci.yml)
+[![Deploy WASM Demo to Pages](https://github.com/gwhitdev/Eiriad-Programming-Language/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/gwhitdev/Eiriad-Programming-Language/actions/workflows/deploy-pages.yml)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-TODO%20App-0f766e)](https://gwhitdev.github.io/Eiriad-Programming-Language/web/todo.html)
+
 This project contains a baseline EIRIAD runtime implemented in Rust with two interfaces:
 
 - Command-line runtime (`eiriad` binary)
@@ -268,3 +272,21 @@ Then open `http://localhost:8080/web/`.
 To open the TODO sample directly after build/serve, visit:
 
 `http://localhost:8080/web/todo.html`
+
+## Demonstrate On GitHub
+
+This repository includes a GitHub Pages deploy workflow at [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml).
+
+How to publish the WASM TODO demo:
+
+1. Push your branch to `main`.
+2. In GitHub, open repository settings and enable Pages with source set to **GitHub Actions**.
+3. Wait for the **Deploy WASM Demo to Pages** workflow to finish.
+
+Demo URLs after deployment:
+
+- `https://<your-user>.github.io/<your-repo>/` (redirects to TODO demo)
+- `https://<your-user>.github.io/<your-repo>/web/todo.html`
+- `https://<your-user>.github.io/<your-repo>/web/` (REPL page)
+
+For a stronger demo in your README, add a short screen recording (GIF/MP4) and link the live URL near the top of the document.
