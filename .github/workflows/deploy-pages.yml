@@ -32,7 +32,7 @@ jobs:
         run: cargo install wasm-pack --locked
 
       - name: Build WASM package
-        run: wasm-pack build --target web --features wasm --release
+        run: wasm-pack build --target web --features wasm
 
       - name: Prepare Pages artifact
         run: |
