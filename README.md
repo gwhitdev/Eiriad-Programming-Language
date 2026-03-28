@@ -136,6 +136,32 @@ Or via Make:
 make wasm-demo
 ```
 
+### Build a `.ei` file into a WASM web app
+
+You can package any EIRIAD source file as a runnable browser app (using the
+WASM runtime) with:
+
+```bash
+make wasm-ei APP=examples/demo.ei
+```
+
+This generates:
+
+- `web/generated/demo/index.html`
+- `web/generated/demo/main.js`
+
+Then serve the repo and open:
+
+`http://localhost:8080/web/generated/demo/`
+
+Custom app name:
+
+```bash
+make wasm-ei APP=examples/http_methods.ei NAME=http-methods
+```
+
+This outputs to `web/generated/http-methods/`.
+
 ## Notes
 
 - This is an interpreter-first runtime aligned with the spec's current tree-walk phase.
