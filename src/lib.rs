@@ -256,7 +256,7 @@ mod wasm_api {
         let add_handler = Closure::wrap(Box::new(move || {
             let status = add_state.borrow().status_el.clone();
             if let Err(err) = add_state.borrow_mut().add_todo() {
-                status_error(&status, &format!("Failed to add TODO: {}", err));
+                status_error(&status, &format!("Failed to add TODO: {:?}", err));
             }
         }) as Box<dyn FnMut()>);
         add_btn.set_onclick(Some(add_handler.as_ref().unchecked_ref()));
@@ -266,7 +266,7 @@ mod wasm_api {
         let refresh_handler = Closure::wrap(Box::new(move || {
             let status = refresh_state.borrow().status_el.clone();
             if let Err(err) = refresh_state.borrow_mut().refresh_todos() {
-                status_error(&status, &format!("Failed to refresh TODOs: {}", err));
+                status_error(&status, &format!("Failed to refresh TODOs: {:?}", err));
             }
         }) as Box<dyn FnMut()>);
         refresh_btn.set_onclick(Some(refresh_handler.as_ref().unchecked_ref()));
@@ -276,7 +276,7 @@ mod wasm_api {
         let clear_handler = Closure::wrap(Box::new(move || {
             let status = clear_state.borrow().status_el.clone();
             if let Err(err) = clear_state.borrow_mut().clear_todos() {
-                status_error(&status, &format!("Failed to clear TODOs: {}", err));
+                status_error(&status, &format!("Failed to clear TODOs: {:?}", err));
             }
         }) as Box<dyn FnMut()>);
         clear_btn.set_onclick(Some(clear_handler.as_ref().unchecked_ref()));
@@ -290,7 +290,7 @@ mod wasm_api {
             event.prevent_default();
             let status = key_state.borrow().status_el.clone();
             if let Err(err) = key_state.borrow_mut().add_todo() {
-                status_error(&status, &format!("Failed to add TODO: {}", err));
+                status_error(&status, &format!("Failed to add TODO: {:?}", err));
             }
         }) as Box<dyn FnMut(KeyboardEvent)>);
         input_el.set_onkeydown(Some(key_handler.as_ref().unchecked_ref()));
