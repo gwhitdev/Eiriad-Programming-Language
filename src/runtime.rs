@@ -599,6 +599,13 @@ fn equals(a: &Value, b: &Value) -> bool {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn eiriad_serve(runtime: &mut Runtime, port: u16, handler: &UserFunction) -> EiriadResult<Value> {
+    // `serve` is a blocking loop, so flush any prior `print(...)` output now.
+    if !runtime.output.is_empty() {
+        for line in runtime.output.drain(..) {
+            println!("{}", line);
+        }
+    }
+
     use tiny_http::{Response, Server, StatusCode};
 
     let addr = format!("0.0.0.0:{}", port);
