@@ -162,6 +162,85 @@ make wasm-ei APP=examples/http_methods.ei NAME=http-methods
 
 This outputs to `web/generated/http-methods/`.
 
+## Tutorial: Write and Run an Eiriad WASM App
+
+This walkthrough shows the full flow from writing a `.ei` file to running it in
+the browser.
+
+### 1. Create a new app file
+
+Create `examples/hello_web.ei`:
+
+```ei
+print("Hello from Eiriad WASM")
+
+mut count = 41
+count = count + 1
+
+print("count = " + count)
+count
+```
+
+The final expression (`count`) is shown as the last `=>` value in the web app.
+
+### 2. Generate a WASM web app from the `.ei` file
+
+```bash
+make wasm-ei APP=examples/hello_web.ei NAME=hello-web
+```
+
+This command does two things:
+
+1. Builds the Eiriad WASM runtime package (`pkg/`)
+2. Generates a runnable web app at `web/generated/hello-web/`
+
+Generated files:
+
+- `web/generated/hello-web/index.html`
+- `web/generated/hello-web/main.js`
+
+### 3. Serve the repository root
+
+```bash
+python3 -m http.server 8080
+```
+
+### 4. Open the app in your browser
+
+Open:
+
+`http://localhost:8080/web/generated/hello-web/`
+
+You will see:
+
+- Source panel with your `.ei` code
+- Output panel with `print(...)` output and final result
+- `Run App` button to run the program again
+- `Reset Runtime` button to clear runtime state
+
+### 5. Edit and re-run (developer loop)
+
+After changing your `.ei` file, regenerate and refresh:
+
+```bash
+make wasm-ei APP=examples/hello_web.ei NAME=hello-web
+```
+
+Then hard refresh the browser page (`Ctrl+Shift+R`).
+
+### 6. Publish to GitHub Pages
+
+Commit and push your changes to `main`. The Pages workflow builds WASM and
+publishes `web/` and `pkg/`.
+
+Your generated app URL pattern is:
+
+`https://<your-user>.github.io/<your-repo>/web/generated/<name>/`
+
+For this example:
+
+`https://<your-user>.github.io/<your-repo>/web/generated/hello-web/`
+
 ## Notes
 
 - This is an interpreter-first runtime aligned with the spec's current tree-walk phase.
